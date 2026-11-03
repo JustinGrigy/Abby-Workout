@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Abby's Hybrid Pulse Training Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f43f5e;
+            --primary-dark: #e11d48;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --success: #22c55e;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 70px; }
+        header { background: linear-gradient(135deg, #1e293b, #0f172a); border-bottom: 1px solid var(--card-border); padding: 16px 20px; position: sticky; top: 0; z-index: 100; text-align: center; }
+        header h1 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+        header p { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+        .container { max-width: 600px; margin: 0 auto; width: 100%; padding: 16px; flex: 1; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Equal width 5-day grid carousel */
+        .day-carousel { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 16px; }
+        .day-btn { background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted); padding: 8px 4px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; text-align: center; cursor: pointer; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .day-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        .workout-day-section { display: none; }
+        .workout-day-section.active { display: block; }
+        .exercise-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        .exercise-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; color: var(--text-main); }
+        .exercise-card .meta { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px; }
+        .protocol-box { background: rgba(56, 189, 248, 0.08); border: 1px dashed var(--accent); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.78rem; color: var(--accent); font-weight: 500; }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: center; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; font-weight: 700; }
+        input, select { background: #0f172a; border: 1px solid var(--card-border); color: var(--text-main); padding: 8px; border-radius: 8px; font-size: 0.85rem; width: 100%; text-align: center; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
+        .save-btn { background: var(--success); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; height: 35px; align-self: flex-end; }
+        .save-btn:active { transform: scale(0.96); }
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b; border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000; max-width: 600px; margin: 0 auto; }
+        .nav-item { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; gap: 4px; cursor: pointer; flex: 1; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item span { font-size: 1.2rem; }
+        .stretch-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+        .stretch-card h3 { font-size: 1rem; font-weight: 600; color: var(--primary); margin-bottom: 6px; }
+        .stretch-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px; }
+        .stretch-card .duration { font-size: 0.75rem; background: rgba(56, 189, 248, 0.1); color: var(--accent); padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: 600; }
+        .history-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+        .history-box h3 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; color: var(--text-main); }
+        
+        /* Accordion dropdown styles */
+        .accordion-item { border: 1px solid var(--card-border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; background: #0f172a; }
+        .accordion-header { padding: 10px 14px; background: rgba(30, 41, 59, 0.8); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 600; }
+        .accordion-body { padding: 10px 14px; display: none; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--card-border); }
+        .accordion-item.open .accordion-body { display: block; }
+        
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-top: 10px; }
+        .btn-sheets { background: #2563eb; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-top: 8px; }
+        .status-msg { font-size: 0.75rem; text-align: center; margin-top: 8px; color: var(--accent); min-height: 16px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Abby's Hybrid Pulse Training Tracker</h1>
+        <p>Strength, Glutes, Core & Mobility (5-Day Split)</p>
+    </header>
+
+    <div class="container">
+        <!-- WORKOUT TAB -->
+        <div id="workout-tab" class="tab-content active">
+            <div class="day-carousel">
+                <button class="day-btn active" onclick="switchDay(0)">Day 1: Upper A</button>
+                <button class="day-btn" onclick="switchDay(1)">Day 2: Glutes</button>
+                <button class="day-btn" onclick="switchDay(2)">Day 3: Quad</button>
+                <button class="day-btn" onclick="switchDay(3)">Day 4: Upper B</button>
+                <button class="day-btn" onclick="switchDay(4)">Day 5: Posterior</button>
+            </div>
+
+            <!-- Day 1: Upper A -->
+            <div class="workout-day-section active" id="day-0">
+                <div class="protocol-box">
+                    🧘 <b>Pre-Workout Warm-Up:</b> 5-min dynamic stretch & mobility<br>
+                    🧘‍♀️ <b>Post-Workout Cool-Down:</b> 5-min upper body & thoracic stretching
+                </div>
+                <div class="exercise-card">
+                    <h3>1. Barbell Bench Press</h3>
+                    <div class="meta">2 Warm-ups, 1 Lead-in, 4 Working Sets × 3-5 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 1', 'Barbell Bench Press', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>2. Band-Assisted Pull-Ups</h3>
+                    <div class="meta">3 Working Sets × 5-6 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="text" placeholder="Band"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 1', 'Band-Assisted Pull-Ups', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>3. Bent-Over Landmine Rows</h3>
+                    <div class="meta">1 Warm-up, 4 Working Sets × 8-10 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 1', 'Bent-Over Landmine Rows', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>4. Seated Overhead DB Press</h3>
+                    <div class="meta">4 Working Sets × 8-10 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 1', 'Seated Overhead DB Press', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>5. Chest-Supported Rows</h3>
+                    <div class="meta">4 Working Sets × 10-12 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 1', 'Chest-Supported Rows', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>6. Face Pulls</h3>
+                    <div class="meta">3 Working Sets × 12-15 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 1', 'Face Pulls', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>7. Lateral Raises & Curls Superset</h3>
+                    <div class="meta">3 Sets × 12-15 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 1', 'Lateral Raises / Curls', this)">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day 2: Glutes & Core -->
+            <div class="workout-day-section" id="day-1">
+                <div class="protocol-box">
+                    🧘 <b>Pre-Workout Warm-Up:</b> 10-min lower-body mobility & banded glute activation<br>
+                    🧘‍♀️ <b>Post-Workout Cool-Down:</b> 10-min deep static hip stretching
+                </div>
+                <div class="exercise-card">
+                    <h3>1. Barbell Hip Thrusts</h3>
+                    <div class="meta">2 Warm-ups, 4 Working Sets × 8-10 reps + 2 Failure Sets</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 2', 'Barbell Hip Thrusts', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>2. Wide-Stance Smith Machine Squats</h3>
+                    <div class="meta">2 Warm-ups, 1 Lead-in, 4 Working Sets × 10-12 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 2', 'Smith Machine Squats', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>3. Cable Glute Kickbacks</h3>
+                    <div class="meta">4 Working Sets × 8-10 reps per leg</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 2', 'Cable Glute Kickbacks', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>4. Barbell Romanian Deadlifts (RDLs)</h3>
+                    <div class="meta">1 Warm-up, 3 Working Sets × 10-12 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 2', 'Barbell RDLs', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>5. Core Routine</h3>
+                    <div class="meta">Hanging Leg Raises, Planks, Cable Crunches</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="text" placeholder="Done"></div>
+                        <div class="input-group"><label>Reps</label><input type="text" placeholder="Pass"></div>
+                        <div class="input-group"><label>RPE</label><input type="text" placeholder="Pass"></div>
+                        <button class="save-btn" onclick="logSet('Day 2', 'Core Routine', this)">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day 3: Quad & Glute -->
+            <div class="workout-day-section" id="day-2">
+                <div class="protocol-box">
+                    🧘 <b>Pre-Workout Warm-Up:</b> 10-min ankle dorsiflexion & knee/hip mobility<br>
+                    🧘‍♀️ <b>Post-Workout Cool-Down:</b> 10-min deep static hip & quad stretching
+                </div>
+                <div class="exercise-card">
+                    <h3>1. Barbell Back Squat</h3>
+                    <div class="meta">2 Warm-ups, 1 Lead-in, 4 Working Sets × 3-5 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 3', 'Barbell Back Squat', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>2. Seated Machine Hip Abductors</h3>
+                    <div class="meta">3 Working Sets × 15-20 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 3', 'Seated Hip Abductors', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>3. Barbell Hip Thrusts</h3>
+                    <div class="meta">1 Warm-up, 4 Working Sets × 8-10 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 3', 'Hip Thrusts', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>4. Bulgarian Split Squats</h3>
+                    <div class="meta">3 Working Sets × 8-10 reps per leg</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 3', 'Bulgarian Split Squats', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>5. Glute Extensions & RDL Superset</h3>
+                    <div class="meta">3 Working Sets × 10-12 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 3', 'Glute Ext / RDL Superset', this)">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day 4: Upper B -->
+            <div class="workout-day-section" id="day-3">
+                <div class="protocol-box">
+                    🧘 <b>Pre-Workout Warm-Up:</b> Dynamic upper mobility & band pull-aparts<br>
+                    🧘‍♀️ <b>Post-Workout Cool-Down:</b> Full-body & hamstring stretching
+                </div>
+                <div class="exercise-card">
+                    <h3>1. Dumbbell Incline Bench Press</h3>
+                    <div class="meta">1 Warm-up, 4 Working Sets × 8-10 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 4', 'DB Incline Bench Press', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>2. Neutral-Grip Lat Pulldowns</h3>
+                    <div class="meta">1 Warm-up, 4 Working Sets × 8-10 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 4', 'Neutral Lat Pulldowns', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>3. Seated Cable Rows</h3>
+                    <div class="meta">1 Warm-up, 4 Working Sets × 8-10 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 4', 'Seated Cable Rows', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>4. Band-Assisted Chin-Ups</h3>
+                    <div class="meta">4 Working Sets × 5-6 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="text" placeholder="Band"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 4', 'Band-Assisted Chin-Ups', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>5. Chest-Supported Rows</h3>
+                    <div class="meta">4 Working Sets × 10-12 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 4', 'Chest-Supported Rows', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>6. Face Pulls</h3>
+                    <div class="meta">3 Working Sets × 12-15 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 4', 'Face Pulls', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>7. Tricep Pushdowns & Hammer Curls</h3>
+                    <div class="meta">3 Sets × 10-12 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 4', 'Triceps & Curls', this)">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day 5: Posterior Chain -->
+            <div class="workout-day-section" id="day-4">
+                <div class="protocol-box">
+                    🧘 <b>Pre-Workout Warm-Up:</b> 10-min dynamic hamstring stretches & hip hinges<br>
+                    🧘‍♀️ <b>Post-Workout Cool-Down:</b> Lower back & hip mobility
+                </div>
+                <div class="exercise-card">
+                    <h3>1. Barbell Deadlifts</h3>
+                    <div class="meta">2 Warm-ups, 1 Lead-in, 4 Working Sets × 3-5 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 5', 'Barbell Deadlifts', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>2. Leg Press</h3>
+                    <div class="meta">3 Working Sets × 10-12 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 5', 'Leg Press', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>3. Cable Glute Kickbacks</h3>
+                    <div class="meta">3 Working Sets × 10-12 reps per leg</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 5', 'Cable Kickbacks', this)">Save</button>
+                    </div>
+                </div>
+                <div class="exercise-card">
+                    <h3>4. Standing Calf Raises</h3>
+                    <div class="meta">4 Working Sets × 12-15 reps</div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight</label><input type="number" placeholder="kg"></div>
+                        <div class="input-group"><label>Reps</label><input type="number" placeholder="reps"></div>
+                        <div class="input-group"><label>RPE</label><input type="number" step="0.5" placeholder="RPE"></div>
+                        <button class="save-btn" onclick="logSet('Day 5', 'Standing Calf Raises', this)">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STRETCHES TAB -->
+        <div id="stretches-tab" class="tab-content">
+            <div class="stretch-card">
+                <h3>1. Pigeon Pose</h3>
+                <p>Bring one knee forward and angle it toward your wrist while extending the back leg straight behind you. Keep hips square and gently fold forward.</p>
+                <div class="duration">Hold 60–90 seconds per leg (Glutes & Rotators)</div>
+            </div>
+            <div class="stretch-card">
+                <h3>2. Couch Stretch</h3>
+                <p>Place your back knee against a wall or couch with your shin vertical, stepping your opposite foot forward into a deep lunge.</p>
+                <div class="duration">Hold 60 seconds per leg (Hip Flexors & Quads)</div>
+            </div>
+            <div class="stretch-card">
+                <h3>3. 90/90 Hip Switches</h3>
+                <p>Sit on the floor with both knees bent at 90-degree angles—one leg internally rotated in front, the other externally behind. Smoothly swivel knees to the opposite side.</p>
+                <div class="duration">10–12 smooth alternating reps (Rotation)</div>
+            </div>
+            <div class="stretch-card">
+                <h3>4. Butterfly Stretch</h3>
+                <p>Sit tall with the soles of your feet pressed together and knees dropped open toward the floor. Gently hinge forward from your hips.</p>
+                <div class="duration">Hold 90 seconds (Adductors & Groin)</div>
+            </div>
+            <div class="stretch-card">
+                <h3>5. Active Front Split Slider</h3>
+                <p>Kneel on a sliding disc or towel, slowly sliding your front leg forward into a split while keeping your torso upright and hands supported on blocks or the floor.</p>
+                <div class="duration">3 sets × 5 slow eccentric lowerings</div>
+            </div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="history-tab" class="tab-content">
+            <div class="history-box">
+                <h3>Workout Log History</h3>
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <button class="save-btn" style="flex:1;" onclick="exportJSON()">Export JSON</button>
+                    <button class="save-btn" style="flex:1; background:var(--primary);" onclick="clearLogs()">Clear Local</button>
+                </div>
+                <button class="btn-sheets" onclick="syncToGoogleSheets()">Sync Logs to Google Sheets 🚀</button>
+                <div id="sync-status" class="status-msg"></div>
+                <div id="history-list" style="margin-top: 14px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <button class="nav-item active" onclick="switchTab(0)"><span>🏋️</span>Workout</button>
+        <button class="nav-item" onclick="switchTab(1)"><span>🧘</span>Stretches</button>
+        <button class="nav-item" onclick="switchTab(2)"><span>📜</span>History</button>
+    </nav>
+
+    <script>
+        const SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyNrn8fuD75qTxvsGgtgzOMh0DfIH8DcWzWeNKHBjEj3y_j2pyR6cBcwi3XF4PUbvGF/exec";
+        let logs = JSON.parse(localStorage.getItem('abby_pulse_logs') || '[]');
+
+        function switchTab(index) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content')[index].classList.add('active');
+            document.querySelectorAll('.nav-item')[index].classList.add('active');
+        }
+
+        function switchDay(dayIndex) {
+            document.querySelectorAll('.day-btn').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.workout-day-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.day-btn')[dayIndex].classList.add('active');
+            document.getElementById(`day-${dayIndex}`).classList.add('active');
+        }
+
+        // Generate Toronto Timestamp
+        function getTorontoTimestamp() {
+            return new Date().toLocaleString('en-US', { timeZone: 'America/Toronto', hour12: false });
+        }
+
+        function logSet(dayName, exerciseName, btnElement) {
+            const card = btnElement.closest('.exercise-card');
+            const inputs = card.querySelectorAll('input');
+            const weight = inputs[0].value;
+            const reps = inputs[1].value;
+            const rpe = inputs[2].value;
+
+            if(!weight && !reps) {
+                alert('Please enter weight or reps before saving.');
+                return;
+            }
+
+            const record = {
+                timestamp: getTorontoTimestamp(),
+                dayName: dayName,
+                exerciseName: exerciseName,
+                weight: weight || '',
+                reps: reps || '',
+                rpe: rpe || '-'
+            };
+
+            logs.unshift(record);
+            localStorage.setItem('abby_pulse_logs', JSON.stringify(logs));
+            updateHistoryUI();
+            
+            // Brief success feedback
+            const originalText = btnElement.innerText;
+            btnElement.innerText = 'Saved!';
+            btnElement.style.background = '#38bdf8';
+            setTimeout(() => {
+                btnElement.innerText = originalText;
+                btnElement.style.background = '';
+            }, 1200);
+
+            inputs.forEach(input => input.value = '');
+        }
+
+        function updateHistoryUI() {
+            const list = document.getElementById('history-list');
+            if(logs.length === 0) {
+                list.innerHTML = '<p style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding:10px;">No workout sets logged yet.</p>';
+                return;
+            }
+
+            list.innerHTML = logs.map((item, index) => `
+                <div class="accordion-item" id="acc-item-${index}">
+                    <div class="accordion-header" onclick="toggleAccordion(${index})">
+                        <span>${item.dayName}: ${item.exerciseName}</span>
+                        <span style="color:var(--accent); font-size:0.75rem;">${item.timestamp.split(',')[0]} ▼</span>
+                    </div>
+                    <div class="accordion-body">
+                        <b>Timestamp:</b> ${item.timestamp}<br>
+                        <b>Weight:</b> ${item.weight ? item.weight + 'kg' : '-'}<br>
+                        <b>Reps:</b> ${item.reps || '-'}<br>
+                        <b>RPE:</b> ${item.rpe}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleAccordion(index) {
+            const item = document.getElementById(`acc-item-${index}`);
+            item.classList.toggle('open');
+        }
+
+        function clearLogs() {
+            if(confirm('Are you sure you want to clear all local workout logs?')) {
+                logs = [];
+                localStorage.removeItem('abby_pulse_logs');
+                updateHistoryUI();
+            }
+        }
+
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "abby_pulse_training_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        async function syncToGoogleSheets() {
+            const statusEl = document.getElementById('sync-status');
+            if(logs.length === 0) {
+                statusEl.innerText = "⚠️ No logs available to sync.";
+                return;
+            }
+
+            statusEl.innerText = "⏳ Syncing logs to Google Sheets (Logs tab)...";
+
+            try {
+                const response = await fetch(SHEETS_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(logs)
+                });
+
+                statusEl.innerText = "✅ Successfully sent to Google Sheets!";
+                setTimeout(() => { statusEl.innerText = ""; }, 4000);
+            } catch (error) {
+                statusEl.innerText = "❌ Sync failed. Check network connection.";
+                console.error(error);
+            }
+        }
+
+        updateHistoryUI();
+    </script>
+</body>
+</html>
