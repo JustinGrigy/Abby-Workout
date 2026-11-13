@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HYBRID PULSE // ABBY — Training & Mobility Tracker</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        obsidian: '#0a0c10',
+                        cardbase: '#13161f',
+                        cardhover: '#191d29',
+                        accent: {
+                            rose: '#f43f5e',
+                            indigo: '#6366f1',
+                            emerald: '#10b981',
+                            amber: '#f59e0b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0a0c10;
+            color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(19, 22, 31, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .glass-header {
+            background: rgba(10, 12, 16, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Hide number input arrows for cleaner mobile UI */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .custom-checkbox:checked {
+            background-color: #10b981;
+            border-color: #10b981;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.35); }
+            50% { box-shadow: 0 0 18px 4px rgba(244, 63, 94, 0.25); }
+        }
+        .active-hold-ring {
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen pb-16 selection:bg-rose-500 selection:text-white">
+
+    <!-- STICKY TOP HEADER & 3-TAB NAVIGATION -->
+    <header class="sticky top-0 z-40 glass-header">
+        <div class="max-w-2xl mx-auto px-4 pt-3.5 pb-2.5">
+            <!-- Brand Title Row -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 via-pink-600 to-indigo-600 flex items-center justify-center text-white font-black text-base tracking-tighter shadow-lg shadow-rose-500/20">
+                        HP
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-base sm:text-lg font-black tracking-tight text-white">
+                                HYBRID PULSE <span class="text-rose-500">//</span> ABBY
+                            </h1>
+                        </div>
+                        <p class="text-[11px] text-gray-400 font-medium">5-Day Hypertrophy, Glute & Endurance Split</p>
+                    </div>
+                </div>
+
+                <!-- Quick Access Status Badge -->
+                <div class="flex flex-col items-end">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        READY
+                    </span>
+                    <span class="text-[10px] text-gray-500 mt-0.5 font-medium">London, ON</span>
+                </div>
+            </div>
+
+            <!-- Streamlined 3-Tab Top Navigation Bar -->
+            <nav class="grid grid-cols-3 gap-1.5 mt-3.5 p-1 bg-[#13161f] rounded-xl border border-white/5" role="tablist">
+                <button onclick="switchMainTab('workout')" id="tab-btn-workout" class="main-tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-500 to-indigo-600 text-white shadow-md shadow-rose-500/20">
+                    <span>🏋️</span>
+                    <span>Workout</span>
+                </button>
+                <button onclick="switchMainTab('stretches')" id="tab-btn-stretches" class="main-tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-gray-400 hover:text-white hover:bg-white/5">
+                    <span>🧘</span>
+                    <span>Stretches</span>
+                </button>
+                <button onclick="switchMainTab('history')" id="tab-btn-history" class="main-tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-gray-400 hover:text-white hover:bg-white/5">
+                    <span>📜</span>
+                    <span>History</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="max-w-2xl mx-auto px-4 mt-4">
+
+        <!-- ========================================================= -->
+        <!-- TAB 1: WORKOUT TRACKER                                    -->
+        <!-- ========================================================= -->
+        <section id="view-workout" class="tab-view space-y-4">
+            
+            <!-- Equal-Width 5-Button Day Selector Grid -->
+            <div class="grid grid-cols-5 gap-1.5 p-1.5 glass-card rounded-2xl">
+                <button onclick="selectWorkoutDay('MON')" id="day-tab-MON" class="day-btn py-2.5 rounded-xl text-center transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
+                    <span class="block text-xs font-extrabold tracking-wide">MON</span>
+                    <span class="block text-[9px] font-medium opacity-85 mt-0.5">Upper A</span>
+                </button>
+                <button onclick="selectWorkoutDay('TUE')" id="day-tab-TUE" class="day-btn py-2.5 rounded-xl text-center transition-all text-gray-400 hover:text-gray-200 hover:bg-white/5">
+                    <span class="block text-xs font-extrabold tracking-wide">TUE</span>
+                    <span class="block text-[9px] font-medium opacity-85 mt-0.5">Glutes</span>
+                </button>
+                <button onclick="selectWorkoutDay('WED')" id="day-tab-WED" class="day-btn py-2.5 rounded-xl text-center transition-all text-gray-400 hover:text-gray-200 hover:bg-white/5">
+                    <span class="block text-xs font-extrabold tracking-wide">WED</span>
+                    <span class="block text-[9px] font-medium opacity-85 mt-0.5">Lower</span>
+                </button>
+                <button onclick="selectWorkoutDay('THU')" id="day-tab-THU" class="day-btn py-2.5 rounded-xl text-center transition-all text-gray-400 hover:text-gray-200 hover:bg-white/5">
+                    <span class="block text-xs font-extrabold tracking-wide">THU</span>
+                    <span class="block text-[9px] font-medium opacity-85 mt-0.5">Upper B</span>
+                </button>
+                <button onclick="selectWorkoutDay('FRI')" id="day-tab-FRI" class="day-btn py-2.5 rounded-xl text-center transition-all text-gray-400 hover:text-gray-200 hover:bg-white/5">
+                    <span class="block text-xs font-extrabold tracking-wide">FRI</span>
+                    <span class="block text-[9px] font-medium opacity-85 mt-0.5">Posterior</span>
+                </button>
+            </div>
+
+            <!-- Dynamic Day Content Container -->
+            <div id="workout-day-viewport" class="space-y-4">
+                <!-- Rendered via JavaScript -->
+            </div>
+
+            <!-- Prominent Session Action Footer -->
+            <div class="glass-card rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-3 border border-white/10 shadow-xl">
+                <button onclick="completeAndSaveSession()" class="w-full sm:flex-1 py-3.5 px-5 rounded-xl bg-gradient-to-r from-rose-500 via-pink-600 to-indigo-600 hover:from-rose-400 hover:to-indigo-500 text-white font-extrabold text-sm tracking-wide shadow-lg shadow-rose-500/25 transition-all active:scale-[0.99] flex items-center justify-center gap-2">
+                    <span>✓</span>
+                    <span>Complete & Save Session</span>
+                </button>
+                <button onclick="confirmResetDayInputs()" class="w-full sm:w-auto py-3.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-semibold text-xs border border-white/10 transition-all">
+                    Reset Today's Inputs
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 2: STRETCHES & SPLITS MOBILITY                        -->
+        <!-- ========================================================= -->
+        <section id="view-stretches" class="tab-view hidden space-y-4">
+            
+            <!-- Dedicated Stretch Hold Timer Header Card -->
+            <div id="stretch-timer-card" class="glass-card rounded-2xl p-5 border border-indigo-500/20 bg-gradient-to-br from-[#13161f] via-indigo-950/20 to-[#13161f] space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-rose-400">Mobility & Splits Protocol</span>
+                        <h2 class="text-lg font-extrabold text-white mt-0.5">10-Stretch Hip & Splits Routine</h2>
+                        <p class="text-xs text-gray-400">Hold stretches smoothly without forcing pain. Breathe deeply into end-range.</p>
+                    </div>
+                </div>
+
+                <!-- Interactive Static Hold Timer -->
+                <div class="bg-[#0a0c10]/90 rounded-xl p-4 border border-white/10 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span id="active-stretch-label" class="text-[11px] font-semibold text-indigo-300 block">Selected Hold Timer</span>
+                            <div id="hold-timer-readout" class="text-3xl sm:text-4xl font-black font-mono text-white tracking-tight mt-0.5">01:00</div>
+                        </div>
+                        <div class="flex flex-wrap justify-end gap-1.5">
+                            <button onclick="setHoldDuration(30)" id="preset-30" class="preset-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-all">30s</button>
+                            <button onclick="setHoldDuration(60)" id="preset-60" class="preset-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600/30 text-indigo-200 border border-indigo-500/50 transition-all">60s</button>
+                            <button onclick="setHoldDuration(90)" id="preset-90" class="preset-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-all">90s</button>
+                        </div>
+                    </div>
+
+                    <!-- Countdown Progress Bar -->
+                    <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div id="hold-progress-bar" class="h-full bg-gradient-to-r from-rose-500 to-indigo-500 transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+
+                    <!-- Start / Pause / Reset Controls -->
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button onclick="toggleHoldTimer()" id="hold-start-btn" class="py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-500 to-indigo-600 hover:opacity-95 text-white font-bold text-xs shadow-md shadow-rose-500/20 transition-all">
+                            Start Hold
+                        </button>
+                        <button onclick="resetHoldTimer()" class="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-semibold text-xs border border-white/10 transition-all">
+                            Reset Timer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 10 Stretch Cards List -->
+            <div id="stretches-grid" class="space-y-3">
+                <!-- Rendered via JavaScript -->
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 3: SESSION HISTORY & BACKUP                           -->
+        <!-- ========================================================= -->
+        <section id="view-history" class="tab-view hidden space-y-4">
+            
+            <!-- History Header & Backup Controls -->
+            <div class="glass-card rounded-2xl p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+                    <div>
+                        <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+                            <span>📜</span> Workout History
+                        </h2>
+                        <p class="text-xs text-gray-400">Saved sessions formatted in London, Ontario (EST/EDT) time</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="exportHistoryJSON()" class="px-3 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all">
+                            Export JSON Backup
+                        </button>
+                        <label class="px-3 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold cursor-pointer transition-all">
+                            Import JSON
+                            <input type="file" id="import-json-input" accept=".json" onchange="importHistoryJSON(event)" class="hidden">
+                        </label>
+                        <button onclick="confirmClearAllHistory()" class="px-3 py-2 rounded-xl bg-rose-600/15 hover:bg-rose-600/25 text-rose-400 border border-rose-500/30 text-xs font-bold transition-all">
+                            Clear History
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div>
+                    <input type="text" id="history-filter-input" oninput="renderHistoryAccordions()" placeholder="Filter by date (e.g. 2026-11), day, or exercise name..." class="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors">
+                </div>
+
+                <!-- Date-Grouped Collapsible Accordions -->
+                <div id="history-accordions-list" class="space-y-2.5">
+                    <!-- Rendered via JavaScript -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- CUSTOM NOTIFICATION TOAST -->
+    <div id="toast-banner" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-xl glass-card border border-emerald-500/40 bg-[#13161f]/95 text-white text-xs font-bold shadow-2xl flex items-center gap-2.5 transition-all duration-300 opacity-0 pointer-events-none translate-y-4">
+        <span id="toast-icon" class="text-emerald-400 text-base">✓</span>
+        <span id="toast-message">Action completed</span>
+    </div>
+
+    <!-- CUSTOM MODAL DIALOG (Replaces alert/confirm) -->
+    <div id="dialog-overlay" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="glass-card max-w-sm w-full rounded-2xl p-5 border border-white/15 space-y-4 shadow-2xl">
+            <h3 id="dialog-title" class="text-base font-extrabold text-white">Confirm Action</h3>
+            <p id="dialog-body" class="text-xs text-gray-300 leading-relaxed">Are you sure?</p>
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button onclick="closeDialog()" id="dialog-cancel-btn" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold transition-all">Cancel</button>
+                <button id="dialog-confirm-btn" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APPLICATION JAVASCRIPT -->
+    <script>
+        // =========================================================================
+        // 1. EXACT 5-DAY TRAINING SPLIT DATA (Updated Training Plan Abby)
+        // =========================================================================
+        const ABBY_TRAINING_SPLIT = {
+            MON: {
+                key: 'MON',
+                shortLabel: 'Monday',
+                title: 'Monday: Upper Body A & Conditioning',
+                warmup: [
+                    '5-minute dynamic stretch & mobility'
+                ],
+                cardioNote: '2.5-minute warm-up + 30-minute Incline Treadmill Walk.',
+                exercises: [
+                    {
+                        name: 'Barbell Bench Press',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Lead-In', target: 'Lead-in' },
+                            { type: 'Working', target: '3-5 reps' },
+                            { type: 'Working', target: '3-5 reps' },
+                            { type: 'Working', target: '3-5 reps' },
+                            { type: 'Working', target: '3-5 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Band-Assisted Pull-Ups',
+                        sets: [
+                            { type: 'Working', target: '5-6 reps' },
+                            { type: 'Working', target: '5-6 reps' },
+                            { type: 'Working', target: '5-6 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Bent-Over Landmine Rows',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Seated Overhead Dumbbell Press',
+                        sets: [
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Wide-Grip Seated Rows',
+                        sets: [
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Face Pulls',
+                        sets: [
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Lateral Raises / Bicep Curls (Superset)',
+                        sets: [
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' }
+                        ]
+                    }
+                ]
+            },
+            TUE: {
+                key: 'TUE',
+                shortLabel: 'Tuesday',
+                title: 'Tuesday: Glutes, Hack Squats & Core (Non-Soccer Week)',
+                warmup: [
+                    '10-minute dynamic lower-body mobility',
+                    'Banded glute activation'
+                ],
+                cardioNote: '35-minute Incline Treadmill Walk + 10-minute deep static hip stretching.',
+                exercises: [
+                    {
+                        name: 'Barbell Hip Thrusts',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Failure', target: 'AMRAP (failure)' },
+                            { type: 'Failure', target: 'AMRAP (failure)' }
+                        ]
+                    },
+                    {
+                        name: 'Hack Squats',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Lead-In', target: 'Lead-in' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Seated Machine Hip Abductors',
+                        sets: [
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Barbell Romanian Deadlifts (RDLs)',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Weighted Hanging Leg Raises (Core)',
+                        sets: [
+                            { type: 'Working', target: '10-15 reps' },
+                            { type: 'Working', target: '10-15 reps' },
+                            { type: 'Working', target: '10-15 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Weighted Planks (Core)',
+                        sets: [
+                            { type: 'Working', target: '60s hold' },
+                            { type: 'Working', target: '60s hold' },
+                            { type: 'Working', target: '60s hold' }
+                        ]
+                    },
+                    {
+                        name: 'Cable Crunches (Core)',
+                        sets: [
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' }
+                        ]
+                    }
+                ]
+            },
+            WED: {
+                key: 'WED',
+                shortLabel: 'Wednesday',
+                title: 'Wednesday: Lower Body (Quad & Glute Focus)',
+                warmup: [
+                    'Ankle dorsiflexion mobility',
+                    'Knee & hip mobility',
+                    'Dynamic leg swings (10 min total)'
+                ],
+                cardioNote: '30-minute Incline Treadmill Walk + 10-minute deep static hip and quad stretching.',
+                exercises: [
+                    {
+                        name: 'Barbell Back Squats',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Lead-In', target: 'Lead-in' },
+                            { type: 'Working', target: '3-5 reps' },
+                            { type: 'Working', target: '3-5 reps' },
+                            { type: 'Working', target: '3-5 reps' },
+                            { type: 'Working', target: '3-5 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Seated Machine Hip Abductors',
+                        sets: [
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Barbell Hip Thrusts',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Dumbbell Romanian Deadlifts (RDLs)',
+                        sets: [
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' }
+                        ]
+                    },
+                    {
+                        name: '45° Glute Extensions',
+                        sets: [
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' }
+                        ]
+                    }
+                ]
+            },
+            THU: {
+                key: 'THU',
+                shortLabel: 'Thursday',
+                title: 'Thursday: Upper Body B & Endurance Run',
+                warmup: [
+                    'Dynamic upper-body mobility',
+                    'Band pull-aparts'
+                ],
+                cardioNote: '10 km Long Run (Zone 2 steady-state aerobic pace).',
+                exercises: [
+                    {
+                        name: 'Dumbbell Incline Bench Press',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Seated Chest Flys',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Seated Cable Rows',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Band-Assisted Chin-Ups',
+                        sets: [
+                            { type: 'Working', target: '5-6 reps' },
+                            { type: 'Working', target: '5-6 reps' },
+                            { type: 'Working', target: '5-6 reps' },
+                            { type: 'Working', target: '5-6 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Seated Wide Grip Rows',
+                        sets: [
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' },
+                            { type: 'Working', target: '10-12 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Face Pulls',
+                        sets: [
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' },
+                            { type: 'Working', target: '12-15 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Tricep Pushdowns / Hammer Curls (Superset)',
+                        sets: [
+                            { type: 'Working', target: '10-12 reps each' },
+                            { type: 'Working', target: '10-12 reps each' },
+                            { type: 'Working', target: '10-12 reps each' }
+                        ]
+                    }
+                ]
+            },
+            FRI: {
+                key: 'FRI',
+                shortLabel: 'Friday',
+                title: 'Friday: Posterior Chain (Glute & Deadlift Focus) & Mixed Cardio',
+                warmup: [
+                    '10-minute dynamic hamstring stretches',
+                    'Hip hinges'
+                ],
+                cardioNote: '20-minute Stationary Bike + 20-minute Treadmill Walk + 10-minute lower back & hip mobility.',
+                exercises: [
+                    {
+                        name: 'Barbell Deadlifts',
+                        sets: [
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Warm-Up', target: 'Warm-up' },
+                            { type: 'Lead-In', target: 'Lead-in' },
+                            { type: 'Working', target: '3-5 reps' },
+                            { type: 'Working', target: '3-5 reps' },
+                            { type: 'Working', target: '3-5 reps' },
+                            { type: 'Working', target: '3-5 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Barbell Hip Thrusts',
+                        sets: [
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' },
+                            { type: 'Working', target: '8-10 reps' }
+                        ]
+                    },
+                    {
+                        name: 'Bulgarian Split Squats',
+                        sets: [
+                            { type: 'Working', target: '8-10 reps/leg' },
+                            { type: 'Working', target: '8-10 reps/leg' },
+                            { type: 'Working', target: '8-10 reps/leg' },
+                            { type: 'Working', target: '8-10 reps/leg' }
+                        ]
+                    },
+                    {
+                        name: 'Cable Glute Kickbacks',
+                        sets: [
+                            { type: 'Working', target: '10-12 reps/leg' },
+                            { type: 'Working', target: '10-12 reps/leg' },
+                            { type: 'Working', target: '10-12 reps/leg' },
+                            { type: 'Working', target: '10-12 reps/leg' }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // =========================================================================
+        // 2. 10-STRETCH HIP & SPLITS MOBILITY ROUTINE DATA
+        // =========================================================================
+        const STRETCHES_DATA = [
+            {
+                name: '1. Pigeon Pose',
+                target: 'Outer Glutes & Deep Hip Rotators',
+                defaultSec: 60,
+                cue: 'Bring front shin across mat, square hips toward floor, extend back leg straight, and hinge torso forward.',
+                svg: `<svg viewBox="0 0 80 64" class="w-16 h-12 stroke-rose-400" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="6" y1="54" x2="74" y2="54" stroke="#374151" stroke-width="2"/>
+                        <circle cx="24" cy="24" r="4.5"/>
+                        <path d="M26 28 L34 42 L20 52 L36 52"/>
+                        <path d="M34 42 L68 53"/>
+                        <path d="M27 32 L18 46"/>
+                      </svg>`
+            },
+            {
+                name: '2. Couch Stretch',
+                target: 'Rectus Femoris & Deep Hip Flexors',
+                defaultSec: 60,
+                cue: 'Place back knee near wall with shin vertical against wall, step front foot into 90° lunge, squeeze glute.',
+                svg: `<svg viewBox="0 0 80 64" class="w-16 h-12 stroke-indigo-400" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="10" x2="12" y2="54" stroke="#374151" stroke-width="2"/>
+                        <line x1="12" y1="54" x2="72" y2="54" stroke="#374151" stroke-width="2"/>
+                        <circle cx="38" cy="18" r="4.5"/>
+                        <path d="M38 23 L38 40 L20 53 L14 26"/>
+                        <path d="M38 40 L56 40 L56 53"/>
+                      </svg>`
+            },
+            {
+                name: '3. 90/90 Hip Switches',
+                target: 'Internal & External Hip Capsule',
+                defaultSec: 60,
+                cue: 'Sit tall with both knees bent at 90°. Keep heels planted as you smoothly rotate knees from side to side.',
+                svg: `<svg viewBox="0 0 80 64" class="w-16 h-12 stroke-emerald-400" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="8" y1="54" x2="72" y2="54" stroke="#374151" stroke-width="2"/>
+                        <circle cx="40" cy="18" r="4.5"/>
+                        <path d="M40 23 L40 42"/>
+                        <path d="M40 42 L22 42 L22 53"/>
+                        <path d="M40 42 L54 52 L66 44"/>
+                      </svg>`
+            },
+            {
+                name: '4. Seated Butterfly',
+                target: 'Adductors & Groin (Middle Split Prep)',
+                defaultSec: 90,
+                cue: 'Press soles of feet together, pull heels close, keep spine neutral and gently press knees toward floor.',
+                svg: `<svg viewBox="0 0 80 64" class="w-16 h-12 stroke-rose-400" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="8" y1="54" x2="72" y2="54" stroke="#374151" stroke-width="2"/>
+                        <circle cx="40" cy="16" r="4.5"/>
+                        <path d="M40 21 L40 44"/>
+                        <path d="M40 44 L22 48 L40 53 L58 48 Z"/>
+                        <path d="M40 28 L28 45 M40 28 L52 45"/>
+                      </svg>`
+            },
+            {
+                name: '5. Active Front Split Slider',
+                target: 'Eccentric Hamstring & Flexor Control',
+                defaultSec: 60,
+                cue: 'Place front heel on slider or towel, slowly glide into front split with upright torso, pull back with control.',
+                svg: `<svg viewBox="0 0 80 64" class="w-16 h-12 stroke-indigo-400" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="6" y1="54" x2="74" y2="54" stroke="#374151" stroke-width="2"/>
+                        <circle cx="40" cy="22" r="4.5"/>
+                        <path d="M40 27 L40 44"/>
+                        <path d="M40 44 L14 53"/>
+                        <path d="M40 44 L66 53"/>
+                        <path d="M40 31 L30 42 M40 31 L50 42"/>
+                      </svg>`
+            },
+            {
+                name: '6. Lizard Lunge',
+                target: 'Deep Hip Flexors & Anterior Capsule',
+                defaultSec: 60,
+                cue: 'Step foot wide outside hands in low lunge, drop back knee, and sink hips forward onto forearms if able.',
+                svg: `<svg viewBox="0 0 80 64" class="w-16 h-12 stroke-emerald-400" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="6" y1="54" x2="74" y2="54" stroke="#374151" stroke-width="2"/>
+                        <circle cx="24" cy="30" r="4.5"/>
+                        <path d="M27 33 L42 42 L68 53"/>
+                        <path d="M42 42 L26 42 L26 53"/>
+                        <path d="M31 35 L31 53"/>
+                      </svg>`
+            },
+            {
+                name: '7. Seated Straddle Fold',
+                target: 'Medial Hamstrings & Inner Thighs',
+                defaultSec: 90,
+                cue: 'Open legs into wide V with toes and kneecaps pointing straight up. Walk hands forward with flat back.',
+                svg: `<svg viewBox="0 0 80 64" class="w-16 h-12 stroke-rose-400" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="6" y1="54" x2="74" y2="54" stroke="#374151" stroke-width="2"/>
+                        <circle cx="40" cy="28" r="4.5"/>
+                        <path d="M40 33 L40 46"/>
+                        <path d="M40 46 L12 53 M40 46 L68 53"/>
+                        <path d="M40 36 L40 53"/>
+                      </svg>`
+            },
+            {
+                name: '8. Kneeling Hamstring Stretch',
+                target: 'Proximal & Distal Hamstrings',
+                defaultSec: 60,
+                cue: 'From half-kneeling, straighten front leg with ankle flexed, push hips back, and fold chest toward shin.',
+                svg: `<svg viewBox="0 0 80 64" class="w-16 h-12 stroke-indigo-400" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="6" y1="54" x2="74" y2="54" stroke="#374151" stroke-width="2"/>
+                        <circle cx="38" cy="24" r="4.5"/>
+                        <path d="M36 28 L26 40 L26 53 L14 53"/>
+                        <path d="M26 40 L58 53"/>
+                        <path d="M33 32 L46 46"/>
+                      </svg>`
+            },
+            {
+                name: '9. Frog Stretch',
+                target: 'Deep Adductors (Middle Split Key)',
+                defaultSec: 90,
+                cue: 'Set knees wide with ankles aligned behind knees and inner feet flat. Lower to forearms and ease hips back.',
+                svg: `<svg viewBox="0 0 80 64" class="w-16 h-12 stroke-emerald-400" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="6" y1="54" x2="74" y2="54" stroke="#374151" stroke-width="2"/>
+                        <circle cx="40" cy="26" r="4.5"/>
+                        <path d="M40 31 L40 44"/>
+                        <path d="M40 44 L18 44 L14 53 M40 44 L62 44 L66 53"/>
+                      </svg>`
+            },
+            {
+                name: '10. Cossack Squat',
+                target: 'Adductor Strength & Ankle Dorsiflexion',
+                defaultSec: 60,
+                cue: 'Shift weight into deep single-leg squat with heel down while opposite leg stays straight with toes lifted.',
+                svg: `<svg viewBox="0 0 80 64" class="w-16 h-12 stroke-rose-400" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="6" y1="54" x2="74" y2="54" stroke="#374151" stroke-width="2"/>
+                        <circle cx="26" cy="22" r="4.5"/>
+                        <path d="M26 27 L26 42"/>
+                        <path d="M26 42 L16 36 L18 53"/>
+                        <path d="M26 42 L62 53"/>
+                      </svg>`
+            }
+        ];
+
+        // =========================================================================
+        // 3. STATE & LOCALSTORAGE INITIALIZATION
+        // =========================================================================
+        const STORAGE_KEYS = {
+            DRAFT_INPUTS: 'hp_abby_draft_inputs_v2',
+            SAVED_HISTORY: 'hp_abby_saved_history_v2',
+            LAST_WEIGHTS: 'hp_abby_last_weights_v2'
+        };
+
+        let currentMainTab = 'workout';
+        let currentWorkoutDay = 'MON';
+        let draftInputs = JSON.parse(localStorage.getItem(STORAGE_KEYS.DRAFT_INPUTS)) || {};
+        let savedHistory = JSON.parse(localStorage.getItem(STORAGE_KEYS.SAVED_HISTORY)) || [];
+        let lastWeightsMap = JSON.parse(localStorage.getItem(STORAGE_KEYS.LAST_WEIGHTS)) || {};
+
+        // Stretch Hold Timer State
+        let holdTargetSeconds = 60;
+        let holdRemainingSeconds = 60;
+        let holdIntervalId = null;
+        let isHoldRunning = false;
+
+        // London, Ontario (America/Toronto) Timestamp Formatter
+        function getTorontoDateParts() {
+            const now = new Date();
+            const isoDate = now.toLocaleDateString('en-CA', { timeZone: 'America/Toronto' }); // YYYY-MM-DD
+            const fullFormatted = now.toLocaleString('en-US', {
+                timeZone: 'America/Toronto',
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            return { isoDate, fullFormatted };
+        }
+
+        // =========================================================================
+        // 4. TAB & DAY NAVIGATION
+        // =========================================================================
+        function switchMainTab(tabName) {
+            currentMainTab = tabName;
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.main-tab-btn').forEach(btn => {
+                btn.className = 'main-tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 text-gray-400 hover:text-white hover:bg-white/5';
+            });
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            activeBtn.className = 'main-tab-btn py-2 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-500 to-indigo-600 text-white shadow-md shadow-rose-500/20';
+
+            if (tabName === 'history') {
+                renderHistoryAccordions();
+            }
+        }
+
+        function selectWorkoutDay(dayKey) {
+            currentWorkoutDay = dayKey;
+            document.querySelectorAll('.day-btn').forEach(btn => {
+                btn.className = 'day-btn py-2.5 rounded-xl text-center transition-all text-gray-400 hover:text-gray-200 hover:bg-white/5';
+            });
+            const activeDayBtn = document.getElementById(`day-tab-${dayKey}`);
+            activeDayBtn.className = 'day-btn py-2.5 rounded-xl text-center transition-all bg-indigo-600 text-white shadow-md shadow-indigo-600/30';
+
+            renderWorkoutDayView(dayKey);
+        }
+
+        // =========================================================================
+        // 5. RENDER WORKOUT DAY VIEW
+        // =========================================================================
+        function renderWorkoutDayView(dayKey) {
+            const dayData = ABBY_TRAINING_SPLIT[dayKey];
+            const viewport = document.getElementById('workout-day-viewport');
+            if (!dayData || !viewport) return;
+
+            const dayDraft = draftInputs[dayKey] || { warmups: {}, sets: {} };
+
+            // Build Warm-Up Checklist HTML
+            const warmupItemsHTML = dayData.warmup.map((item, wIdx) => {
+                const isChecked = !!dayDraft.warmups[wIdx];
+                return `
+                    <label class="flex items-center gap-3 p-2.5 rounded-xl bg-[#0a0c10]/70 border border-white/5 cursor-pointer hover:border-indigo-500/40 transition-colors">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="handleWarmupToggle('${dayKey}', ${wIdx}, this.checked)" class="custom-checkbox w-4 h-4 rounded border-gray-600 bg-gray-900 text-emerald-500 focus:ring-0 cursor-pointer">
+                        <span class="text-xs font-medium ${isChecked ? 'line-through text-gray-500' : 'text-gray-200'}">${item}</span>
+                    </label>
+                `;
+            }).join('');
+
+            // Build Exercises HTML
+            const exercisesHTML = dayData.exercises.map((exercise, exIdx) => {
+                const setRowsHTML = exercise.sets.map((setObj, setIdx) => {
+                    const setKey = `${exIdx}_${setIdx}`;
+                    const savedSet = dayDraft.sets[setKey] || { weight: '', reps: '', done: false };
+                    
+                    // Subtle placeholder hint from previous logged weight for this exercise + set
+                    const prevHintKey = `${exercise.name}__${setIdx}`;
+                    const prevWeightHint = lastWeightsMap[prevHintKey] ? `${lastWeightsMap[prevHintKey]}` : 'lbs';
+
+                    // Badge styling by set type
+                    let badgeStyle = 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30';
+                    if (setObj.type === 'Warm-Up') {
+                        badgeStyle = 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+                    } else if (setObj.type === 'Lead-In') {
+                        badgeStyle = 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
+                    } else if (setObj.type === 'Failure') {
+                        badgeStyle = 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-bold';
+                    }
+
+                    const rowHighlight = savedSet.done ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-[#0a0c10]/75 border-white/5';
+
+                    return `
+                        <div id="set-row-${dayKey}-${setKey}" class="grid grid-cols-12 gap-1.5 sm:gap-2 items-center p-2 rounded-xl border transition-colors ${rowHighlight}">
+                            <!-- Set # & Type Badge -->
+                            <div class="col-span-5 sm:col-span-5 flex items-center gap-1.5 min-w-0">
+                                <span class="text-[11px] font-mono font-bold text-gray-500 w-4 text-center flex-shrink-0">${setIdx + 1}</span>
+                                <div class="min-w-0 flex-1">
+                                    <span class="inline-block px-1.5 py-0.5 rounded text-[10px] border ${badgeStyle} leading-tight">
+                                        ${setObj.type}
+                                    </span>
+                                    <span class="block text-[10px] text-gray-400 truncate mt-0.5">${setObj.target}</span>
+                                </div>
+                            </div>
+
+                            <!-- Weight Input -->
+                            <div class="col-span-3">
+                                <input type="number" inputmode="decimal" step="any"
+                                    value="${savedSet.weight}"
+                                    placeholder="${prevWeightHint}"
+                                    oninput="handleSetInput('${dayKey}', '${setKey}', 'weight', this.value)"
+                                    class="w-full bg-[#13161f] border border-white/10 focus:border-rose-500 rounded-lg py-1.5 px-1 text-center text-xs font-semibold text-white placeholder-gray-600 focus:outline-none">
+                            </div>
+
+                            <!-- Reps Input -->
+                            <div class="col-span-2">
+                                <input type="number" inputmode="numeric"
+                                    value="${savedSet.reps}"
+                                    placeholder="reps"
+                                    oninput="handleSetInput('${dayKey}', '${setKey}', 'reps', this.value)"
+                                    class="w-full bg-[#13161f] border border-white/10 focus:border-indigo-500 rounded-lg py-1.5 px-1 text-center text-xs font-semibold text-white placeholder-gray-600 focus:outline-none">
+                            </div>
+
+                            <!-- Done Checkmark Toggle -->
+                            <div class="col-span-2 flex justify-end pr-1">
+                                <button type="button" onclick="toggleSetDone('${dayKey}', '${setKey}')"
+                                    class="w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${savedSet.done ? 'bg-emerald-500 border-emerald-400 text-white shadow-md shadow-emerald-500/25' : 'bg-[#13161f] border-white/15 text-gray-500 hover:border-white/30'}">
+                                    <span class="text-xs font-black">✓</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="glass-card rounded-2xl p-4 space-y-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-md bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[11px] font-extrabold flex items-center justify-center">
+                                        ${exIdx + 1}
+                                    </span>
+                                    <h3 class="text-sm sm:text-base font-bold text-white">${exercise.name}</h3>
+                                </div>
+                                <p class="text-[11px] text-gray-400 mt-0.5 pl-7">${exercise.sets.length} total sets</p>
+                            </div>
+                        </div>
+
+                        <!-- Table Column Headers -->
+                        <div class="grid grid-cols-12 gap-1.5 sm:gap-2 px-2 pt-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            <div class="col-span-5">Set / Target</div>
+                            <div class="col-span-3 text-center">Weight (lbs)</div>
+                            <div class="col-span-2 text-center">Reps</div>
+                            <div class="col-span-2 text-right pr-1.5">Done</div>
+                        </div>
+
+                        <!-- Set Rows -->
+                        <div class="space-y-1.5">
+                            ${setRowsHTML}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            viewport.innerHTML = `
+                <!-- Day Summary Card -->
+                <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3.5 border border-white/10">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-rose-400">${dayData.shortLabel} Session</span>
+                        <h2 class="text-base sm:text-lg font-extrabold text-white mt-0.5">${dayData.title}</h2>
+                    </div>
+
+                    <!-- Interactive Dynamic Warm-Up Checklist -->
+                    <div class="space-y-1.5">
+                        <span class="text-[11px] font-bold text-indigo-300 uppercase tracking-wider block">🔥 Dynamic Warm-Up Checklist</span>
+                        <div class="space-y-1.5">
+                            ${warmupItemsHTML}
+                        </div>
+                    </div>
+
+                    <!-- Cardio / Cool-Down Banner -->
+                    <div class="p-3 rounded-xl bg-gradient-to-r from-indigo-950/60 to-rose-950/40 border border-indigo-500/25 flex items-start gap-2.5">
+                        <span class="text-base leading-none mt-0.5">🏃‍♀️</span>
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-300 block">Cardio & Cool-Down Protocol</span>
+                            <p class="text-xs text-gray-200 mt-0.5 leading-relaxed">${dayData.cardioNote}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exercise Cards -->
+                <div class="space-y-3.5">
+                    ${exercisesHTML}
+                </div>
+            `;
+        }
+
+        // =========================================================================
+        // 6. WORKOUT INPUT PERSISTENCE & SESSION SAVING
+        // =========================================================================
+        function ensureDayDraft(dayKey) {
+            if (!draftInputs[dayKey]) {
+                draftInputs[dayKey] = { warmups: {}, sets: {} };
+            }
+        }
+
+        function saveDraftInputs() {
+            localStorage.setItem(STORAGE_KEYS.DRAFT_INPUTS, JSON.stringify(draftInputs));
+        }
+
+        function handleWarmupToggle(dayKey, wIdx, checked) {
+            ensureDayDraft(dayKey);
+            draftInputs[dayKey].warmups[wIdx] = checked;
+            saveDraftInputs();
+            renderWorkoutDayView(dayKey);
+        }
+
+        function handleSetInput(dayKey, setKey, field, val) {
+            ensureDayDraft(dayKey);
+            if (!draftInputs[dayKey].sets[setKey]) {
+                draftInputs[dayKey].sets[setKey] = { weight: '', reps: '', done: false };
+            }
+            draftInputs[dayKey].sets[setKey][field] = val;
+            saveDraftInputs();
+        }
+
+        function toggleSetDone(dayKey, setKey) {
+            ensureDayDraft(dayKey);
+            if (!draftInputs[dayKey].sets[setKey]) {
+                draftInputs[dayKey].sets[setKey] = { weight: '', reps: '', done: false };
+            }
+            draftInputs[dayKey].sets[setKey].done = !draftInputs[dayKey].sets[setKey].done;
+            saveDraftInputs();
+            renderWorkoutDayView(dayKey);
+        }
+
+        function completeAndSaveSession() {
+            const dayData = ABBY_TRAINING_SPLIT[currentWorkoutDay];
+            const dayDraft = draftInputs[currentWorkoutDay] || { warmups: {}, sets: {} };
+
+            const loggedExercises = [];
+
+            dayData.exercises.forEach((exercise, exIdx) => {
+                const completedSets = [];
+                exercise.sets.forEach((setObj, setIdx) => {
+                    const setKey = `${exIdx}_${setIdx}`;
+                    const entry = dayDraft.sets[setKey];
+                    if (entry && (entry.done || entry.weight !== '' || entry.reps !== '')) {
+                        const weightClean = entry.weight !== '' ? entry.weight : 'BW';
+                        const repsClean = entry.reps !== '' ? entry.reps : setObj.target;
+                        completedSets.push({
+                            setNumber: setIdx + 1,
+                            type: setObj.type,
+                            target: setObj.target,
+                            weight: weightClean,
+                            reps: repsClean,
+                            done: !!entry.done
+                        });
+
+                        // Store last used weight for future placeholder hint
+                        if (entry.weight !== '') {
+                            lastWeightsMap[`${exercise.name}__${setIdx}`] = entry.weight;
+                        }
+                    }
+                });
+
+                if (completedSets.length > 0) {
+                    loggedExercises.push({
+                        name: exercise.name,
+                        sets: completedSets
+                    });
+                }
+            });
+
+            const warmupsCheckedCount = Object.values(dayDraft.warmups).filter(Boolean).length;
+
+            if (loggedExercises.length === 0 && warmupsCheckedCount === 0) {
+                showToast('Enter at least one set or check off warm-up first!', 'warning');
+                return;
+            }
+
+            const { isoDate, fullFormatted } = getTorontoDateParts();
+
+            const sessionRecord = {
+                id: Date.now(),
+                isoDate: isoDate,
+                timestampFormatted: fullFormatted,
+                dayKey: currentWorkoutDay,
+                dayTitle: dayData.title,
+                warmupsCompleted: `${warmupsCheckedCount}/${dayData.warmup.length}`,
+                cardioNote: dayData.cardioNote,
+                exercises: loggedExercises
+            };
+
+            savedHistory.unshift(sessionRecord);
+            localStorage.setItem(STORAGE_KEYS.SAVED_HISTORY, JSON.stringify(savedHistory));
+            localStorage.setItem(STORAGE_KEYS.LAST_WEIGHTS, JSON.stringify(lastWeightsMap));
+
+            showToast(`Saved ${dayData.shortLabel} session to History!`, 'success');
+        }
+
+        function confirmResetDayInputs() {
+            openDialog(
+                "Reset Today's Inputs?",
+                `Clear all entered weights, reps, and checkmarks for ${ABBY_TRAINING_SPLIT[currentWorkoutDay].shortLabel}? Saved history will not be affected.`,
+                () => {
+                    draftInputs[currentWorkoutDay] = { warmups: {}, sets: {} };
+                    saveDraftInputs();
+                    renderWorkoutDayView(currentWorkoutDay);
+                    showToast(`${ABBY_TRAINING_SPLIT[currentWorkoutDay].shortLabel} inputs cleared`, 'success');
+                }
+            );
+        }
+
+        // =========================================================================
+        // 7. STRETCHES TAB & DEDICATED STRETCH HOLD TIMER
+        // =========================================================================
+        function renderStretchesList() {
+            const grid = document.getElementById('stretches-grid');
+            if (!grid) return;
+
+            grid.innerHTML = STRETCHES_DATA.map((stretch, idx) => `
+                <div class="glass-card rounded-2xl p-4 flex items-start gap-3.5 hover:border-white/15 transition-all">
+                    <!-- Custom Inline SVG Stick-Figure Posture Diagram -->
+                    <div class="flex-shrink-0 bg-[#0a0c10] border border-white/10 rounded-xl p-2 flex items-center justify-center">
+                        ${stretch.svg}
+                    </div>
+
+                    <div class="flex-1 min-w-0 space-y-1.5">
+                        <div class="flex flex-wrap items-center justify-between gap-1.5">
+                            <h3 class="text-sm font-extrabold text-white">${stretch.name}</h3>
+                            <button onclick="loadStretchIntoTimer('${stretch.name.replace(/'/g, "\\'")}', ${stretch.defaultSec})"
+                                class="px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold transition-all">
+                                Load ${stretch.defaultSec}s Hold
+                            </button>
+                        </div>
+
+                        <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">
+                            Target: ${stretch.target}
+                        </span>
+
+                        <p class="text-xs text-gray-300 leading-relaxed pt-0.5">
+                            ${stretch.cue}
+                        </p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadStretchIntoTimer(stretchName, seconds) {
+            document.getElementById('active-stretch-label').textContent = `Hold Timer: ${stretchName}`;
+            setHoldDuration(seconds);
+            document.getElementById('stretch-timer-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function updateHoldTimerUI() {
+            const mins = Math.floor(holdRemainingSeconds / 60);
+            const secs = holdRemainingSeconds % 60;
+            document.getElementById('hold-timer-readout').textContent =
+                `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            const pct = holdTargetSeconds > 0 ? (holdRemainingSeconds / holdTargetSeconds) * 100 : 0;
+            document.getElementById('hold-progress-bar').style.width = `${pct}%`;
+        }
+
+        function setHoldDuration(seconds) {
+            if (isHoldRunning) {
+                clearInterval(holdIntervalId);
+                isHoldRunning = false;
+                document.getElementById('hold-start-btn').textContent = 'Start Hold';
+                document.getElementById('stretch-timer-card').classList.remove('active-hold-ring');
+            }
+            holdTargetSeconds = seconds;
+            holdRemainingSeconds = seconds;
+
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.className = 'preset-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-all';
+            });
+            const activePreset = document.getElementById(`preset-${seconds}`);
+            if (activePreset) {
+                activePreset.className = 'preset-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600/30 text-indigo-200 border border-indigo-500/50 transition-all';
+            }
+
+            updateHoldTimerUI();
+        }
+
+        function toggleHoldTimer() {
+            const btn = document.getElementById('hold-start-btn');
+            const card = document.getElementById('stretch-timer-card');
+
+            if (isHoldRunning) {
+                clearInterval(holdIntervalId);
+                isHoldRunning = false;
+                btn.textContent = 'Resume Hold';
+                card.classList.remove('active-hold-ring');
+            } else {
+                if (holdRemainingSeconds <= 0) {
+                    holdRemainingSeconds = holdTargetSeconds;
+                }
+                isHoldRunning = true;
+                btn.textContent = 'Pause Hold';
+                card.classList.add('active-hold-ring');
+
+                holdIntervalId = setInterval(() => {
+                    if (holdRemainingSeconds > 0) {
+                        holdRemainingSeconds--;
+                        updateHoldTimerUI();
+                    } else {
+                        clearInterval(holdIntervalId);
+                        isHoldRunning = false;
+                        btn.textContent = 'Start Hold';
+                        card.classList.remove('active-hold-ring');
+                        playGentleChime();
+                        showToast('Stretch hold complete! Switch sides or advance.', 'success');
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetHoldTimer() {
+            clearInterval(holdIntervalId);
+            isHoldRunning = false;
+            holdRemainingSeconds = holdTargetSeconds;
+            document.getElementById('hold-start-btn').textContent = 'Start Hold';
+            document.getElementById('stretch-timer-card').classList.remove('active-hold-ring');
+            updateHoldTimerUI();
+        }
+
+        function playGentleChime() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                const ctx = new AudioCtx();
+                const now = ctx.currentTime;
+
+                [523.25, 659.25, 783.99].forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.14);
+                    gain.gain.setValueAtTime(0.001, now + idx * 0.14);
+                    gain.gain.exponentialRampToValueAtTime(0.12, now + idx * 0.14 + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.14 + 0.9);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + idx * 0.14);
+                    osc.stop(now + idx * 0.14 + 0.95);
+                });
+            } catch (err) {
+                // Audio context fallback if blocked
+            }
+        }
+
+        // =========================================================================
+        // 8. HISTORY TAB (DATE-GROUPED COLLAPSIBLE ACCORDIONS & JSON BACKUP)
+        // =========================================================================
+        function renderHistoryAccordions() {
+            const container = document.getElementById('history-accordions-list');
+            const filterText = (document.getElementById('history-filter-input')?.value || '').toLowerCase().trim();
+            if (!container) return;
+
+            if (savedHistory.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 px-4 rounded-2xl bg-[#0a0c10]/60 border border-white/5">
+                        <span class="text-2xl block mb-2">🏋️‍♀️</span>
+                        <p class="text-xs font-semibold text-gray-400">No saved workout sessions yet.</p>
+                        <p class="text-[11px] text-gray-500 mt-1">Log your sets in the Workout tab and tap "Complete & Save Session".</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const filtered = savedHistory.filter(session => {
+                if (!filterText) return true;
+                const matchDate = (session.isoDate || '').toLowerCase().includes(filterText) ||
+                                  (session.timestampFormatted || '').toLowerCase().includes(filterText);
+                const matchTitle = (session.dayTitle || '').toLowerCase().includes(filterText);
+                const matchEx = (session.exercises || []).some(ex => ex.name.toLowerCase().includes(filterText));
+                return matchDate || matchTitle || matchEx;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-xs text-gray-500">
+                        No sessions match "${filterText}".
+                    </div>
+                `;
+                return;
+            }
+
+            // Group sessions by isoDate (YYYY-MM-DD in America/Toronto)
+            const groupedByDate = {};
+            filtered.forEach(session => {
+                const dateKey = session.isoDate || 'Saved Sessions';
+                if (!groupedByDate[dateKey]) {
+                    groupedByDate[dateKey] = [];
+                }
+                groupedByDate[dateKey].push(session);
+            });
+
+            const dateKeys = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
+
+            container.innerHTML = dateKeys.map((dateKey, groupIdx) => {
+                const sessionsInGroup = groupedByDate[dateKey];
+                const isFirstExpanded = groupIdx === 0;
+
+                const sessionsHTML = sessionsInGroup.map(sess => {
+                    const exercisesBlock = (sess.exercises || []).map(ex => {
+                        const setBadges = ex.sets.map(st => `
+                            <div class="flex items-center justify-between px-2.5 py-1 rounded-lg bg-[#0a0c10] border border-white/5 text-[11px]">
+                                <span class="text-gray-400">Set ${st.setNumber} <span class="text-[10px] text-indigo-400">(${st.type})</span></span>
+                                <span class="font-mono font-bold text-white">${st.weight === 'BW' ? 'BW' : st.weight + ' lbs'} × ${st.reps}</span>
+                            </div>
+                        `).join('');
+
+                        return `
+                            <div class="p-3 rounded-xl bg-[#13161f] border border-white/5 space-y-2">
+                                <div class="text-xs font-bold text-rose-300">${ex.name}</div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                    ${setBadges}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="p-3.5 rounded-xl bg-[#0a0c10]/85 border border-white/10 space-y-3">
+                            <div class="flex items-start justify-between gap-2 border-b border-white/5 pb-2.5">
+                                <div>
+                                    <span class="text-[10px] font-mono text-indigo-400 block">${sess.timestampFormatted} (London, ON)</span>
+                                    <h4 class="text-xs sm:text-sm font-extrabold text-white mt-0.5">${sess.dayTitle}</h4>
+                                    <span class="text-[10px] text-emerald-400 font-medium">Warm-Ups Completed: ${sess.warmupsCompleted || 'N/A'}</span>
+                                </div>
+                                <button onclick="confirmDeleteSingleSession(${sess.id})" title="Delete session"
+                                    class="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 border border-rose-500/20 text-[10px] font-bold transition-all">
+                                    Delete
+                                </button>
+                            </div>
+
+                            <div class="space-y-2">
+                                ${exercisesBlock || '<p class="text-[11px] text-gray-500">Warm-up logged only.</p>'}
+                            </div>
+
+                            ${sess.cardioNote ? `<div class="text-[11px] text-gray-400 pt-1 border-t border-white/5">🏃‍♀️ ${sess.cardioNote}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="rounded-2xl bg-[#0a0c10]/70 border border-white/10 overflow-hidden">
+                        <button type="button" onclick="toggleDateAccordion('acc-body-${dateKey}')"
+                            class="w-full px-4 py-3.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors">
+                            <div class="flex items-center gap-2.5">
+                                <span class="px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 font-mono text-xs font-bold">
+                                    ${dateKey}
+                                </span>
+                                <span class="text-xs font-semibold text-gray-300">
+                                    ${sessionsInGroup.length} ${sessionsInGroup.length === 1 ? 'Session' : 'Sessions'}
+                                </span>
+                            </div>
+                            <span class="text-xs text-gray-400 font-bold">▼</span>
+                        </button>
+
+                        <div id="acc-body-${dateKey}" class="${isFirstExpanded ? '' : 'hidden'} p-3.5 pt-0 space-y-3 border-t border-white/5">
+                            <div class="pt-3 space-y-3">
+                                ${sessionsHTML}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleDateAccordion(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) el.classList.toggle('hidden');
+        }
+
+        function confirmDeleteSingleSession(sessionId) {
+            openDialog(
+                'Delete Saved Session?',
+                'Are you sure you want to permanently remove this workout entry from your history?',
+                () => {
+                    savedHistory = savedHistory.filter(item => item.id !== sessionId);
+                    localStorage.setItem(STORAGE_KEYS.SAVED_HISTORY, JSON.stringify(savedHistory));
+                    renderHistoryAccordions();
+                    showToast('Session deleted from history', 'success');
+                }
+            );
+        }
+
+        function confirmClearAllHistory() {
+            if (savedHistory.length === 0) {
+                showToast('History is already empty', 'warning');
+                return;
+            }
+            openDialog(
+                'Clear Entire Workout History?',
+                'This will permanently delete all saved sessions from localStorage. Consider exporting a JSON backup first.',
+                () => {
+                    savedHistory = [];
+                    localStorage.setItem(STORAGE_KEYS.SAVED_HISTORY, JSON.stringify(savedHistory));
+                    renderHistoryAccordions();
+                    showToast('All workout history cleared', 'success');
+                }
+            );
+        }
+
+        function exportHistoryJSON() {
+            const payload = {
+                app: 'HYBRID PULSE // ABBY',
+                exportedAtToronto: getTorontoDateParts().fullFormatted,
+                savedHistory: savedHistory,
+                lastWeightsMap: lastWeightsMap
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Hybrid_Pulse_Abby_Backup_${getTorontoDateParts().isoDate}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('JSON backup downloaded', 'success');
+        }
+
+        function importHistoryJSON(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    const importedSessions = Array.isArray(parsed) ? parsed : parsed.savedHistory;
+                    if (!Array.isArray(importedSessions)) {
+                        throw new Error('Invalid JSON structure');
+                    }
+
+                    // Merge avoiding duplicate IDs
+                    const existingIds = new Set(savedHistory.map(s => s.id));
+                    let addedCount = 0;
+                    importedSessions.forEach(sess => {
+                        if (sess && sess.id && !existingIds.has(sess.id)) {
+                            savedHistory.push(sess);
+                            addedCount++;
+                        }
+                    });
+
+                    savedHistory.sort((a, b) => b.id - a.id);
+                    localStorage.setItem(STORAGE_KEYS.SAVED_HISTORY, JSON.stringify(savedHistory));
+
+                    if (parsed.lastWeightsMap && typeof parsed.lastWeightsMap === 'object') {
+                        lastWeightsMap = { ...lastWeightsMap, ...parsed.lastWeightsMap };
+                        localStorage.setItem(STORAGE_KEYS.LAST_WEIGHTS, JSON.stringify(lastWeightsMap));
+                    }
+
+                    renderHistoryAccordions();
+                    renderWorkoutDayView(currentWorkoutDay);
+                    showToast(`Imported ${addedCount} session(s) successfully!`, 'success');
+                } catch (err) {
+                    showToast('Invalid backup JSON file', 'warning');
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // =========================================================================
+        // 9. TOAST & MODAL DIALOG UTILITIES
+        // =========================================================================
+        let toastTimeout = null;
+        function showToast(message, type = 'success') {
+            const banner = document.getElementById('toast-banner');
+            const icon = document.getElementById('toast-icon');
+            const msgEl = document.getElementById('toast-message');
+
+            msgEl.textContent = message;
+            if (type === 'warning') {
+                icon.textContent = '!';
+                icon.className = 'text-amber-400 font-black text-base';
+                banner.classList.remove('border-emerald-500/40');
+                banner.classList.add('border-amber-500/40');
+            } else {
+                icon.textContent = '✓';
+                icon.className = 'text-emerald-400 font-black text-base';
+                banner.classList.remove('border-amber-500/40');
+                banner.classList.add('border-emerald-500/40');
+            }
+
+            banner.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                banner.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+            }, 3000);
+        }
+
+        function openDialog(title, bodyText, onConfirmCallback) {
+            document.getElementById('dialog-title').textContent = title;
+            document.getElementById('dialog-body').textContent = bodyText;
+            const confirmBtn = document.getElementById('dialog-confirm-btn');
+            confirmBtn.onclick = () => {
+                closeDialog();
+                if (typeof onConfirmCallback === 'function') onConfirmCallback();
+            };
+            document.getElementById('dialog-overlay').classList.remove('hidden');
+        }
+
+        function closeDialog() {
+            document.getElementById('dialog-overlay').classList.add('hidden');
+        }
+
+        // =========================================================================
+        // 10. APP BOOTSTRAP
+        // =========================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto-select current weekday if Mon-Fri, otherwise default to MON
+            const torontoDayShort = new Date().toLocaleDateString('en-US', {
+                timeZone: 'America/Toronto',
+                weekday: 'short'
+            }).toUpperCase();
+            if (ABBY_TRAINING_SPLIT[torontoDayShort]) {
+                selectWorkoutDay(torontoDayShort);
+            } else {
+                selectWorkoutDay('MON');
+            }
+
+            renderStretchesList();
+            updateHoldTimerUI();
+            renderHistoryAccordions();
+        });
+    </script>
+</body>
+</html>
